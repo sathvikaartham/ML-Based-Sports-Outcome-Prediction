@@ -3,114 +3,378 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+
   <title>Cricket Match Outcome Predictor</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+  <link rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}">
 </head>
+
 <body>
+
   <main class="container">
+
+    <!-- =====================================================
+         HERO SECTION
+    ====================================================== -->
+
     <section class="hero">
-      <div class="badge">ML SPORTS PREDICTION</div>
-      <h1>🏏 Cricket Match Outcome Predictor</h1>
-      <p>Predict the likely winning team and projected score using match-state statistics.</p>
+
+      <div class="badge">
+        ML SPORTS PREDICTION
+      </div>
+
+      <h1>
+        🏏 Cricket Match Outcome Predictor
+      </h1>
+
+      <p>
+        Predict the likely winning team and projected score
+        using match-state statistics.
+      </p>
+
     </section>
 
+
+    <!-- =====================================================
+         INPUT FORM
+    ====================================================== -->
+
     <section class="card">
+
       <form method="POST">
+
         <h2>Match Details</h2>
 
         <div class="grid two">
+
+          <!-- Batting Team -->
+
           <label>
             Batting Team
+
             <select name="bat_first" required>
+
               {% for team in teams %}
-                <option value="{{ team }}">{{ team }}</option>
+
+                <option value="{{ team }}">
+                  {{ team }}
+                </option>
+
               {% endfor %}
+
             </select>
+
           </label>
+
+
+          <!-- Bowling / Second Team -->
 
           <label>
             Bowling / Second Team
+
             <select name="bat_second" required>
+
               {% for team in teams %}
-                <option value="{{ team }}">{{ team }}</option>
+
+                <option value="{{ team }}">
+                  {{ team }}
+                </option>
+
               {% endfor %}
+
             </select>
+
           </label>
+
         </div>
+
+
+        <!-- =================================================
+             MATCH STATISTICS
+        ================================================== -->
 
         <h2>Match Statistics</h2>
 
         <div class="grid four">
-          <label>Runs From Ball
-            <input type="number" name="runs_from_ball" step="any" min="0" value="0" required>
+
+          <!-- Runs From Ball -->
+
+          <label>
+            Runs From Ball
+
+            <input
+              type="number"
+              name="runs_from_ball"
+              step="any"
+              min="0"
+              value="0"
+              required
+            >
+
           </label>
 
-          <label>Innings Runs
-            <input type="number" name="innings_runs" step="any" min="0" value="50" required>
+
+          <!-- Innings Runs -->
+
+          <label>
+            Innings Runs
+
+            <input
+              type="number"
+              name="innings_runs"
+              step="any"
+              min="0"
+              value="50"
+              required
+            >
+
           </label>
 
-          <label>Innings Wickets
-            <input type="number" name="innings_wickets" step="any" min="0" value="2" required>
+
+          <!-- Innings Wickets -->
+
+          <label>
+            Innings Wickets
+
+            <input
+              type="number"
+              name="innings_wickets"
+              step="any"
+              min="0"
+              value="2"
+              required
+            >
+
           </label>
 
-          <label>Balls Remaining
-            <input type="number" name="balls_remaining" step="any" min="0" value="60" required>
+
+          <!-- Balls Remaining -->
+
+          <label>
+            Balls Remaining
+
+            <input
+              type="number"
+              name="balls_remaining"
+              step="any"
+              min="0"
+              value="60"
+              required
+            >
+
           </label>
 
-          <label>Total Batter Runs
-            <input type="number" name="total_batter_runs" step="any" min="0" value="25" required>
+
+          <!-- Total Batter Runs -->
+
+          <label>
+            Total Batter Runs
+
+            <input
+              type="number"
+              name="total_batter_runs"
+              step="any"
+              min="0"
+              value="25"
+              required
+            >
+
           </label>
 
-          <label>Total Non-Striker Runs
-            <input type="number" name="total_non_striker_runs" step="any" min="0" value="15" required>
+
+          <!-- Total Non-Striker Runs -->
+
+          <label>
+            Total Non-Striker Runs
+
+            <input
+              type="number"
+              name="total_non_striker_runs"
+              step="any"
+              min="0"
+              value="15"
+              required
+            >
+
           </label>
 
-          <label>Batter Balls Faced
-            <input type="number" name="batter_balls_faced" step="any" min="0" value="20" required>
+
+          <!-- Batter Balls Faced -->
+
+          <label>
+            Batter Balls Faced
+
+            <input
+              type="number"
+              name="batter_balls_faced"
+              step="any"
+              min="0"
+              value="20"
+              required
+            >
+
           </label>
 
-          <label>Non-Striker Balls Faced
-            <input type="number" name="non_striker_balls_faced" step="any" min="0" value="15" required>
+
+          <!-- Non-Striker Balls Faced -->
+
+          <label>
+            Non-Striker Balls Faced
+
+            <input
+              type="number"
+              name="non_striker_balls_faced"
+              step="any"
+              min="0"
+              value="15"
+              required
+            >
+
           </label>
+
         </div>
 
-        <button type="submit">🔮 Predict Outcome</button>
+
+        <!-- =================================================
+             PREDICT BUTTON
+        ================================================== -->
+
+        <button type="submit">
+          🔮 Predict Outcome
+        </button>
+
       </form>
+
     </section>
 
+
+    <!-- =====================================================
+         ERROR MESSAGE
+    ====================================================== -->
+
     {% if error %}
+
       <section class="card error">
-        <strong>Prediction error:</strong>
-        <p>{{ error }}</p>
+
+        <strong>
+          Prediction error:
+        </strong>
+
+        <p>
+          {{ error }}
+        </p>
+
       </section>
+
     {% endif %}
+
+
+    <!-- =====================================================
+         RESULTS
+    ====================================================== -->
 
     {% if result %}
+
       <section class="results">
+
+
+        <!-- Predicted Winner -->
+
         <div class="result-card winner">
-          <span class="result-label">Predicted Winner</span>
-          <strong>{{ result.winner }}</strong>
+
+          <span class="result-label">
+            Predicted Winner
+          </span>
+
+          <strong>
+            {{ result.winner }}
+          </strong>
+
         </div>
+
+
+        <!-- Predicted Score -->
 
         <div class="result-card score">
-          <span class="result-label">Predicted Score</span>
-          <strong>{{ result.score }}</strong>
+
+          <span class="result-label">
+            Predicted Score
+          </span>
+
+          <strong>
+            {{ result.score }}
+          </strong>
+
         </div>
+
+
+        <!-- =================================================
+             MODEL PROBABILITY
+        ================================================== -->
 
         {% if result.probabilities %}
-        <div class="card probability">
-          <h2>Model Probability</h2>
-          <p>{{ result.bat_first }}: {{ result.probabilities.get(0, 0) }}%</p>
-          <p>{{ result.bat_second }}: {{ result.probabilities.get(1, 0) }}%</p>
-        </div>
+
+          <div class="card probability">
+
+            <h2>
+              Model Probability
+            </h2>
+
+
+            <!-- First Batting Team Probability -->
+
+            <p>
+              <strong>
+                {{ result.bat_first }}
+              </strong>
+
+              :
+              {{ result.probabilities.get(result.bat_first, 0) }}%
+            </p>
+
+
+            <!-- Second Batting Team Probability -->
+
+            <p>
+              <strong>
+                {{ result.bat_second }}
+              </strong>
+
+              :
+              {{ result.probabilities.get(result.bat_second, 0) }}%
+            </p>
+
+          </div>
+
         {% endif %}
+
+
       </section>
+
     {% endif %}
 
+
+    <!-- =====================================================
+         FOOTER
+    ====================================================== -->
+
     <footer>
-      <p>Training source: {{ training_source }}</p>
-      <p>Based on the Random Forest methodology from the original MatchResult project.</p>
+
+      <p>
+        Training source:
+        {{ training_source }}
+      </p>
+
+      <p>
+        Based on the Random Forest methodology from the
+        original MatchResult project.
+      </p>
+
     </footer>
+
+
   </main>
+
 </body>
 </html>
