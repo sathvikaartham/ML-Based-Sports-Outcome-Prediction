@@ -10,9 +10,7 @@ from sklearn.ensemble import (
 )
 
 from sklearn.preprocessing import MinMaxScaler
-
 from sklearn.model_selection import train_test_split
-
 from sklearn.metrics import accuracy_score
 
 
@@ -33,6 +31,12 @@ FEATURES = [
     "Non Striker Balls Faced",
 ]
 
+# Memory-conscious model settings
+N_ESTIMATORS = 50
+MAX_DEPTH = 12
+MIN_SAMPLES_LEAF = 2
+N_JOBS = 1
+
 
 # =============================================================
 # PREDICTOR CLASS
@@ -42,24 +46,16 @@ class Predictor:
 
     def __init__(self):
 
-        # -----------------------------------------------------
-        # INITIALIZE ALL ATTRIBUTES
-        # -----------------------------------------------------
-
         self.teams = []
-
         self.training_source = ""
 
         self.accuracies = {}
 
         self.best_model_name = "Random Forest Classifier"
-
         self.best_model_accuracy = None
-
         self.model_accuracy = None
 
         self.classifier = None
-
         self.regressor = None
 
         self.feature_scaler = MinMaxScaler(
@@ -80,9 +76,7 @@ class Predictor:
             / "ball_by_ball_it20.csv"
         )
 
-        test_path = (
-            BASE_DIR / "testData.csv"
-        )
+        test_path = BASE_DIR / "testData.csv"
 
         root_test_path = (
             BASE_DIR
@@ -96,47 +90,46 @@ class Predictor:
 
         if dataset_path.exists():
 
-            df = pd.read_csv(
-                dataset_path
-            )
-
             self.training_source = (
                 "Dataset/ball_by_ball_it20.csv"
             )
 
+            df = pd.read_csv(dataset_path)
+
             self._train_from_full_dataset(df)
 
-        elif test_path.exists():
+            del df
 
-            df = pd.read_csv(
-                test_path
-            )
+        elif test_path.exists():
 
             self.training_source = (
                 "testData.csv fallback (demo mode)"
             )
 
+            df = pd.read_csv(test_path)
+
             self._train_from_test_data(df)
+
+            del df
 
         elif root_test_path.exists():
 
-            df = pd.read_csv(
-                root_test_path
+            self.training_source = (
+                "Dataset/testData.csv fallback (demo mode)"
             )
 
-            self.training_source = (
-                "Dataset/testData.csv fallback "
-                "(demo mode)"
-            )
+            df = pd.read_csv(root_test_path)
 
             self._train_from_test_data(df)
+
+            del df
 
         else:
 
             raise FileNotFoundError(
-                "No training dataset found. Please add "
+                "No training dataset found. Add "
                 "Dataset/ball_by_ball_it20.csv "
-                "or testData.csv to your project."
+                "or testData.csv."
             )
 
     # =========================================================
@@ -172,7 +165,7 @@ class Predictor:
 
         X = X.fillna(0)
 
-        return X.astype(float)
+        return X.astype(np.float32)
 
     # =========================================================
     # PREPARE CLASSIFICATION TARGET
@@ -188,6 +181,14 @@ class Predictor:
             )
 
         elif "Winner" in df.columns:
+
+            if (
+                "Bat Second" not in df.columns
+            ):
+                raise ValueError(
+                    "Dataset requires 'Bat Second' "
+                    "when using the 'Winner' column."
+                )
 
             winner = (
                 df["Winner"]
@@ -220,6 +221,12 @@ class Predictor:
 
     def _prepare_score_target(self, df):
 
+        if "Target Score" not in df.columns:
+
+            raise ValueError(
+                "Dataset requires the 'Target Score' column."
+            )
+
         return pd.to_numeric(
             df["Target Score"],
             errors="coerce"
@@ -246,35 +253,24 @@ class Predictor:
             .str.strip()
         )
 
-        teams = teams[
-            teams != ""
-        ]
+        teams = teams[teams != ""]
 
         self.teams = sorted(
             teams.unique().tolist()
         )
 
     # =========================================================
-    # EVALUATE MODEL ACCURACY
+    # EVALUATE CLASSIFIER ACCURACY
     # =========================================================
 
     def _evaluate_classifier(self, X, y):
 
-        # -----------------------------------------------------
-        # INITIALIZE ACCURACY ATTRIBUTES
-        # -----------------------------------------------------
-
         self.best_model_accuracy = None
-
         self.model_accuracy = None
 
         self.accuracies = {
             self.best_model_name: None
         }
-
-        # -----------------------------------------------------
-        # CHECK DATA AVAILABILITY
-        # -----------------------------------------------------
 
         class_counts = y.value_counts()
 
@@ -291,10 +287,6 @@ class Predictor:
 
             return
 
-        # -----------------------------------------------------
-        # SPLIT DATA
-        # -----------------------------------------------------
-
         X_train, X_test, y_train, y_test = (
             train_test_split(
                 X,
@@ -305,35 +297,28 @@ class Predictor:
             )
         )
 
-        # -----------------------------------------------------
-        # SCALE TRAINING DATA
-        # -----------------------------------------------------
-
-        evaluation_scaler = MinMaxScaler(
-            feature_range=(0, 1)
-        )
+        # Use float32 arrays to reduce memory
+        evaluation_scaler = MinMaxScaler()
 
         X_train_scaled = (
             evaluation_scaler.fit_transform(
                 X_train
-            )
+            ).astype(np.float32)
         )
 
         X_test_scaled = (
             evaluation_scaler.transform(
                 X_test
-            )
+            ).astype(np.float32)
         )
 
-        # -----------------------------------------------------
-        # TRAIN EVALUATION MODEL
-        # -----------------------------------------------------
-
         evaluation_model = RandomForestClassifier(
-            n_estimators=200,
+            n_estimators=N_ESTIMATORS,
+            max_depth=MAX_DEPTH,
+            min_samples_leaf=MIN_SAMPLES_LEAF,
             random_state=42,
             class_weight="balanced",
-            n_jobs=-1
+            n_jobs=N_JOBS
         )
 
         evaluation_model.fit(
@@ -341,19 +326,9 @@ class Predictor:
             y_train
         )
 
-        # -----------------------------------------------------
-        # PREDICT TEST DATA
-        # -----------------------------------------------------
-
-        y_pred = (
-            evaluation_model.predict(
-                X_test_scaled
-            )
+        y_pred = evaluation_model.predict(
+            X_test_scaled
         )
-
-        # -----------------------------------------------------
-        # CALCULATE ACCURACY
-        # -----------------------------------------------------
 
         accuracy = (
             accuracy_score(
@@ -385,30 +360,27 @@ class Predictor:
             f"{self.best_model_accuracy}%"
         )
 
+        # Release temporary evaluation model and arrays
+        del evaluation_model
+        del evaluation_scaler
+        del X_train_scaled
+        del X_test_scaled
+        del y_pred
+
     # =========================================================
     # TRAIN FINAL MODELS
     # =========================================================
 
     def _train_models(self, df):
 
-        # -----------------------------------------------------
-        # PREPARE FEATURES AND TARGETS
-        # -----------------------------------------------------
-
-        X_raw = self._prepare_features(
-            df
-        )
+        X_raw = self._prepare_features(df)
 
         y_class = (
-            self._prepare_classification_target(
-                df
-            )
+            self._prepare_classification_target(df)
         )
 
         y_score = (
-            self._prepare_score_target(
-                df
-            )
+            self._prepare_score_target(df)
         )
 
         # -----------------------------------------------------
@@ -430,13 +402,13 @@ class Predictor:
         y_class = (
             y_class.loc[valid_rows]
             .reset_index(drop=True)
-            .astype(int)
+            .astype(np.int8)
         )
 
         y_score = (
             y_score.loc[valid_rows]
             .reset_index(drop=True)
-            .astype(float)
+            .astype(np.float32)
         )
 
         if len(X_raw) < 2:
@@ -454,7 +426,13 @@ class Predictor:
             )
 
         # -----------------------------------------------------
-        # CALCULATE ACCURACY
+        # GET TEAM NAMES
+        # -----------------------------------------------------
+
+        self._get_teams(df)
+
+        # -----------------------------------------------------
+        # EVALUATE ACCURACY
         # -----------------------------------------------------
 
         self._evaluate_classifier(
@@ -466,39 +444,37 @@ class Predictor:
         # TRAIN FINAL FEATURE SCALER
         # -----------------------------------------------------
 
-        self.feature_scaler.fit(
-            X_raw
-        )
-
         X_scaled = (
-            self.feature_scaler.transform(
+            self.feature_scaler.fit_transform(
                 X_raw
-            )
+            ).astype(np.float32)
         )
 
         # -----------------------------------------------------
         # TRAIN SCORE SCALER
         # -----------------------------------------------------
 
-        self.score_scaler.fit(
+        y_score_array = (
             y_score.to_numpy().reshape(-1, 1)
         )
 
         y_score_scaled = (
-            self.score_scaler.transform(
-                y_score.to_numpy().reshape(-1, 1)
-            ).ravel()
+            self.score_scaler.fit_transform(
+                y_score_array
+            ).ravel().astype(np.float32)
         )
 
         # -----------------------------------------------------
-        # TRAIN FINAL RANDOM FOREST CLASSIFIER
+        # TRAIN FINAL CLASSIFIER
         # -----------------------------------------------------
 
         self.classifier = RandomForestClassifier(
-            n_estimators=200,
+            n_estimators=N_ESTIMATORS,
+            max_depth=MAX_DEPTH,
+            min_samples_leaf=MIN_SAMPLES_LEAF,
             random_state=42,
             class_weight="balanced",
-            n_jobs=-1
+            n_jobs=N_JOBS
         )
 
         self.classifier.fit(
@@ -507,13 +483,15 @@ class Predictor:
         )
 
         # -----------------------------------------------------
-        # TRAIN FINAL RANDOM FOREST REGRESSOR
+        # TRAIN FINAL REGRESSOR
         # -----------------------------------------------------
 
         self.regressor = RandomForestRegressor(
-            n_estimators=200,
+            n_estimators=N_ESTIMATORS,
+            max_depth=MAX_DEPTH,
+            min_samples_leaf=MIN_SAMPLES_LEAF,
             random_state=42,
-            n_jobs=-1
+            n_jobs=N_JOBS
         )
 
         self.regressor.fit(
@@ -521,21 +499,10 @@ class Predictor:
             y_score_scaled
         )
 
-        # -----------------------------------------------------
-        # GET TEAM NAMES
-        # -----------------------------------------------------
+        print("Training completed successfully.")
 
-        self._get_teams(
-            df
-        )
-
-        print(
-            "Training completed successfully."
-        )
-
-        print(
-            f"Training rows: {len(X_raw)}"
-        )
+        print(f"Training rows: {len(X_raw)}")
+        print(f"Teams found: {len(self.teams)}")
 
         print(
             f"Selected model: "
@@ -546,6 +513,14 @@ class Predictor:
             f"Model accuracy: "
             f"{self.best_model_accuracy}"
         )
+
+        # Release temporary training arrays
+        del X_scaled
+        del y_score_array
+        del y_score_scaled
+        del X_raw
+        del y_class
+        del y_score
 
     # =========================================================
     # TRAIN USING FULL DATASET
@@ -573,12 +548,10 @@ class Predictor:
                 + ", ".join(missing)
             )
 
-        self._train_models(
-            df
-        )
+        self._train_models(df)
 
     # =========================================================
-    # TRAIN USING TEST DATA FALLBACK
+    # TRAIN USING TEST DATA
     # =========================================================
 
     def _train_from_test_data(self, df):
@@ -602,9 +575,7 @@ class Predictor:
                 + ", ".join(missing)
             )
 
-        self._train_models(
-            df
-        )
+        self._train_models(df)
 
     # =========================================================
     # PREDICTION
@@ -628,13 +599,8 @@ class Predictor:
         # VALIDATE TEAMS
         # -----------------------------------------------------
 
-        bat_first = str(
-            bat_first
-        ).strip()
-
-        bat_second = str(
-            bat_second
-        ).strip()
+        bat_first = str(bat_first).strip()
+        bat_second = str(bat_second).strip()
 
         if not bat_first or not bat_second:
 
@@ -665,7 +631,7 @@ class Predictor:
         # CREATE INPUT DATA
         # -----------------------------------------------------
 
-        values = pd.DataFrame(
+        values = np.array(
             [[
                 runs_from_ball,
                 innings_runs,
@@ -676,26 +642,16 @@ class Predictor:
                 batter_balls_faced,
                 non_striker_balls_faced
             ]],
-            columns=FEATURES
+            dtype=np.float32
         )
 
-        values = values.apply(
-            pd.to_numeric,
-            errors="coerce"
-        )
-
-        values = values.replace(
-            [np.inf, -np.inf],
-            np.nan
-        )
-
-        if values.isna().any().any():
+        if not np.isfinite(values).all():
 
             raise ValueError(
                 "Please enter valid numeric values."
             )
 
-        if (values < 0).any().any():
+        if (values < 0).any():
 
             raise ValueError(
                 "Match statistics cannot be negative."
@@ -705,11 +661,9 @@ class Predictor:
         # SCALE INPUT
         # -----------------------------------------------------
 
-        X = (
-            self.feature_scaler.transform(
-                values
-            )
-        )
+        X = self.feature_scaler.transform(
+            values
+        ).astype(np.float32)
 
         # -----------------------------------------------------
         # PREDICT WINNER
@@ -719,15 +673,9 @@ class Predictor:
             self.classifier.predict(X)[0]
         )
 
-        # Class 0 = Bat First
-        # Class 1 = Bat Second
-
         if class_prediction == 1:
-
             winner = bat_second
-
         else:
-
             winner = bat_first
 
         # -----------------------------------------------------
@@ -740,7 +688,10 @@ class Predictor:
 
         score = float(
             self.score_scaler.inverse_transform(
-                [[score_scaled]]
+                np.array(
+                    [[score_scaled]],
+                    dtype=np.float32
+                )
             )[0][0]
         )
 
@@ -750,7 +701,7 @@ class Predictor:
         )
 
         # -----------------------------------------------------
-        # CALCULATE PROBABILITIES
+        # CALCULATE WIN PROBABILITIES
         # -----------------------------------------------------
 
         probabilities = {
@@ -758,59 +709,42 @@ class Predictor:
             bat_second: 0.0
         }
 
-        if hasattr(
-            self.classifier,
-            "predict_proba"
+        proba = self.classifier.predict_proba(X)[0]
+
+        classes = self.classifier.classes_
+
+        for cls, probability in zip(
+            classes,
+            proba
         ):
 
-            proba = (
-                self.classifier.predict_proba(X)[0]
-            )
+            if int(cls) == 1:
 
-            classes = (
-                self.classifier.classes_
-            )
+                probabilities[bat_second] = round(
+                    float(probability) * 100,
+                    1
+                )
 
-            for cls, probability in zip(
-                classes,
-                proba
-            ):
+            else:
 
-                if int(cls) == 1:
-
-                    probabilities[bat_second] = round(
-                        float(probability) * 100,
-                        1
-                    )
-
-                else:
-
-                    probabilities[bat_first] = round(
-                        float(probability) * 100,
-                        1
-                    )
+                probabilities[bat_first] = round(
+                    float(probability) * 100,
+                    1
+                )
 
         # -----------------------------------------------------
         # RETURN RESULTS
         # -----------------------------------------------------
 
         return {
-
             "winner": winner,
-
             "score": score,
-
             "bat_first": bat_first,
-
             "bat_second": bat_second,
-
             "probabilities": probabilities,
-
             "best_model": self.best_model_name,
-
             "best_model_accuracy":
                 self.best_model_accuracy,
-
             "model_accuracy":
                 self.model_accuracy
         }
