@@ -1,380 +1,481 @@
-<!doctype html>
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <title>Cricket Match Outcome Predictor</title>
+    <title>Cricket Match Outcome Predictor</title>
 
-  <link rel="stylesheet"
-        href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+
+    <style>
+        .model-information {
+            margin-top: 20px;
+        }
+
+        .model-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            padding: 15px 0;
+            border-bottom: 1px solid #e8edf4;
+        }
+
+        .model-row span {
+            color: #657286;
+            font-size: 14px;
+        }
+
+        .model-row strong {
+            text-align: right;
+            font-size: 15px;
+        }
+
+        .model-note {
+            color: #718096;
+            font-size: 13px;
+            line-height: 1.6;
+            margin-top: 18px;
+        }
+
+        select:disabled {
+            background: #f0f2f5;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 560px) {
+            .model-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            .model-row strong {
+                text-align: left;
+            }
+        }
+    </style>
 </head>
 
 <body>
 
-  <main class="container">
+<main class="container">
 
-    <!-- =====================================================
-         HERO SECTION
-    ====================================================== -->
-
+    <!-- HERO SECTION -->
     <section class="hero">
-
-      <div class="badge">
-        ML SPORTS PREDICTION
-      </div>
-
-      <h1>
-        🏏 Cricket Match Outcome Predictor
-      </h1>
-
-      <p>
-        Predict the likely winning team and projected score
-        using match-state statistics.
-      </p>
-
-    </section>
-
-
-    <!-- =====================================================
-         INPUT FORM
-    ====================================================== -->
-
-    <section class="card">
-
-      <form method="POST">
-
-        <h2>Match Details</h2>
-
-        <div class="grid two">
-
-          <!-- Batting Team -->
-
-          <label>
-            Batting Team
-
-            <select name="bat_first" required>
-
-              {% for team in teams %}
-
-                <option value="{{ team }}">
-                  {{ team }}
-                </option>
-
-              {% endfor %}
-
-            </select>
-
-          </label>
-
-
-          <!-- Bowling / Second Team -->
-
-          <label>
-            Bowling / Second Team
-
-            <select name="bat_second" required>
-
-              {% for team in teams %}
-
-                <option value="{{ team }}">
-                  {{ team }}
-                </option>
-
-              {% endfor %}
-
-            </select>
-
-          </label>
-
+        <div class="badge">
+            ML SPORTS PREDICTION
         </div>
 
-
-        <!-- =================================================
-             MATCH STATISTICS
-        ================================================== -->
-
-        <h2>Match Statistics</h2>
-
-        <div class="grid four">
-
-          <!-- Runs From Ball -->
-
-          <label>
-            Runs From Ball
-
-            <input
-              type="number"
-              name="runs_from_ball"
-              step="any"
-              min="0"
-              value="0"
-              required
-            >
-
-          </label>
-
-
-          <!-- Innings Runs -->
-
-          <label>
-            Innings Runs
-
-            <input
-              type="number"
-              name="innings_runs"
-              step="any"
-              min="0"
-              value="50"
-              required
-            >
-
-          </label>
-
-
-          <!-- Innings Wickets -->
-
-          <label>
-            Innings Wickets
-
-            <input
-              type="number"
-              name="innings_wickets"
-              step="any"
-              min="0"
-              value="2"
-              required
-            >
-
-          </label>
-
-
-          <!-- Balls Remaining -->
-
-          <label>
-            Balls Remaining
-
-            <input
-              type="number"
-              name="balls_remaining"
-              step="any"
-              min="0"
-              value="60"
-              required
-            >
-
-          </label>
-
-
-          <!-- Total Batter Runs -->
-
-          <label>
-            Total Batter Runs
-
-            <input
-              type="number"
-              name="total_batter_runs"
-              step="any"
-              min="0"
-              value="25"
-              required
-            >
-
-          </label>
-
-
-          <!-- Total Non-Striker Runs -->
-
-          <label>
-            Total Non-Striker Runs
-
-            <input
-              type="number"
-              name="total_non_striker_runs"
-              step="any"
-              min="0"
-              value="15"
-              required
-            >
-
-          </label>
-
-
-          <!-- Batter Balls Faced -->
-
-          <label>
-            Batter Balls Faced
-
-            <input
-              type="number"
-              name="batter_balls_faced"
-              step="any"
-              min="0"
-              value="20"
-              required
-            >
-
-          </label>
-
-
-          <!-- Non-Striker Balls Faced -->
-
-          <label>
-            Non-Striker Balls Faced
-
-            <input
-              type="number"
-              name="non_striker_balls_faced"
-              step="any"
-              min="0"
-              value="15"
-              required
-            >
-
-          </label>
-
-        </div>
-
-
-        <!-- =================================================
-             PREDICT BUTTON
-        ================================================== -->
-
-        <button type="submit">
-          🔮 Predict Outcome
-        </button>
-
-      </form>
-
-    </section>
-
-
-    <!-- =====================================================
-         ERROR MESSAGE
-    ====================================================== -->
-
-    {% if error %}
-
-      <section class="card error">
-
-        <strong>
-          Prediction error:
-        </strong>
+        <h1>🏏 Cricket Match Outcome Predictor</h1>
 
         <p>
-          {{ error }}
+            Predict the likely winning team and projected score
+            using match-state statistics and machine learning.
         </p>
+    </section>
 
-      </section>
+    <!-- INPUT FORM -->
+    <section class="card">
 
+        <form method="POST" id="predictionForm">
+
+            <h2>Match Details</h2>
+
+            <div class="grid two">
+
+                <!-- BATTING TEAM -->
+                <label for="bat_first">
+                    Batting Team
+
+                    <select name="bat_first"
+                            id="bat_first"
+                            required>
+
+                        {% for team in teams %}
+                            {% if team in [
+                                "Afghanistan",
+                                "Australia",
+                                "Bangladesh",
+                                "England",
+                                "India",
+                                "Ireland",
+                                "Netherlands",
+                                "New Zealand",
+                                "Pakistan",
+                                "South Africa",
+                                "Sri Lanka",
+                                "Zimbabwe"
+                            ] %}
+
+                                <option
+                                    value="{{ team }}"
+                                    {% if result and result.bat_first == team %}
+                                        selected
+                                    {% elif not result and selected_bat_first == team %}
+                                        selected
+                                    {% elif not result and not selected_bat_first and team == "Afghanistan" %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    {% if team == "Afghanistan" %}🇦🇫
+                                    {% elif team == "Australia" %}🇦🇺
+                                    {% elif team == "Bangladesh" %}🇧🇩
+                                    {% elif team == "England" %}🏴
+                                    {% elif team == "India" %}🇮🇳
+                                    {% elif team == "Ireland" %}🇮🇪
+                                    {% elif team == "Netherlands" %}🇳🇱
+                                    {% elif team == "New Zealand" %}🇳🇿
+                                    {% elif team == "Pakistan" %}🇵🇰
+                                    {% elif team == "South Africa" %}🇿🇦
+                                    {% elif team == "Sri Lanka" %}🇱🇰
+                                    {% elif team == "Zimbabwe" %}🇿🇼
+                                    {% endif %}
+                                    {{ team }}
+                                </option>
+
+                            {% endif %}
+                        {% endfor %}
+
+                    </select>
+                </label>
+
+                <!-- BOWLING TEAM -->
+                <label for="bat_second">
+                    Bowling / Second Team
+
+                    <select name="bat_second"
+                            id="bat_second"
+                            required>
+
+                        {% for team in teams %}
+                            {% if team in [
+                                "Afghanistan",
+                                "Australia",
+                                "Bangladesh",
+                                "England",
+                                "India",
+                                "Ireland",
+                                "Netherlands",
+                                "New Zealand",
+                                "Pakistan",
+                                "South Africa",
+                                "Sri Lanka",
+                                "Zimbabwe"
+                            ] %}
+
+                                <option
+                                    value="{{ team }}"
+                                    {% if result and result.bat_second == team %}
+                                        selected
+                                    {% elif not result and selected_bat_second == team %}
+                                        selected
+                                    {% elif not result and not selected_bat_second and team == "Australia" %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    {% if team == "Afghanistan" %}🇦🇫
+                                    {% elif team == "Australia" %}🇦🇺
+                                    {% elif team == "Bangladesh" %}🇧🇩
+                                    {% elif team == "England" %}🏴
+                                    {% elif team == "India" %}🇮🇳
+                                    {% elif team == "Ireland" %}🇮🇪
+                                    {% elif team == "Netherlands" %}🇳🇱
+                                    {% elif team == "New Zealand" %}🇳🇿
+                                    {% elif team == "Pakistan" %}🇵🇰
+                                    {% elif team == "South Africa" %}🇿🇦
+                                    {% elif team == "Sri Lanka" %}🇱🇰
+                                    {% elif team == "Zimbabwe" %}🇿🇼
+                                    {% endif %}
+                                    {{ team }}
+                                </option>
+
+                            {% endif %}
+                        {% endfor %}
+
+                    </select>
+                </label>
+
+            </div>
+
+            <!-- MATCH STATISTICS -->
+            <h2>Match Statistics</h2>
+
+            <div class="grid four">
+
+                <label for="runs_from_ball">
+                    Runs From Ball
+                    <input type="number"
+                           id="runs_from_ball"
+                           name="runs_from_ball"
+                           step="any"
+                           min="0"
+                           value="{{ request.form.get('runs_from_ball', 0) }}"
+                           required>
+                </label>
+
+                <label for="innings_runs">
+                    Innings Runs
+                    <input type="number"
+                           id="innings_runs"
+                           name="innings_runs"
+                           step="any"
+                           min="0"
+                           value="{{ request.form.get('innings_runs', 50) }}"
+                           required>
+                </label>
+
+                <label for="innings_wickets">
+                    Innings Wickets
+                    <input type="number"
+                           id="innings_wickets"
+                           name="innings_wickets"
+                           min="0"
+                           max="10"
+                           step="1"
+                           value="{{ request.form.get('innings_wickets', 2) }}"
+                           required>
+                </label>
+
+                <label for="balls_remaining">
+                    Balls Remaining
+                    <input type="number"
+                           id="balls_remaining"
+                           name="balls_remaining"
+                           min="0"
+                           max="120"
+                           step="1"
+                           value="{{ request.form.get('balls_remaining', 60) }}"
+                           required>
+                </label>
+
+                <label for="total_batter_runs">
+                    Total Batter Runs
+                    <input type="number"
+                           id="total_batter_runs"
+                           name="total_batter_runs"
+                           min="0"
+                           step="any"
+                           value="{{ request.form.get('total_batter_runs', 25) }}"
+                           required>
+                </label>
+
+                <label for="total_non_striker_runs">
+                    Total Non-Striker Runs
+                    <input type="number"
+                           id="total_non_striker_runs"
+                           name="total_non_striker_runs"
+                           min="0"
+                           step="any"
+                           value="{{ request.form.get('total_non_striker_runs', 15) }}"
+                           required>
+                </label>
+
+                <label for="batter_balls_faced">
+                    Batter Balls Faced
+                    <input type="number"
+                           id="batter_balls_faced"
+                           name="batter_balls_faced"
+                           min="0"
+                           step="1"
+                           value="{{ request.form.get('batter_balls_faced', 20) }}"
+                           required>
+                </label>
+
+                <label for="non_striker_balls_faced">
+                    Non-Striker Balls Faced
+                    <input type="number"
+                           id="non_striker_balls_faced"
+                           name="non_striker_balls_faced"
+                           min="0"
+                           step="1"
+                           value="{{ request.form.get('non_striker_balls_faced', 15) }}"
+                           required>
+                </label>
+
+            </div>
+
+            <button type="submit" id="predictButton">
+                🔮 Predict Outcome
+            </button>
+
+        </form>
+    </section>
+
+    <!-- ERROR MESSAGE -->
+    {% if error %}
+        <section class="card error">
+            <h2>Prediction Error</h2>
+            <p>{{ error }}</p>
+        </section>
     {% endif %}
 
-
-    <!-- =====================================================
-         RESULTS
-    ====================================================== -->
-
+    <!-- PREDICTION RESULTS -->
     {% if result %}
 
-      <section class="results">
+        <section class="results">
 
+            <div class="result-card winner">
+                <span class="result-label">
+                    Predicted Winner
+                </span>
+                <strong id="predictedWinner">
+                    {{ result.winner }}
+                </strong>
+            </div>
 
-        <!-- Predicted Winner -->
+            <div class="result-card score">
+                <span class="result-label">
+                    Predicted Score
+                </span>
+                <strong>
+                    {{ result.score }}
+                </strong>
+            </div>
 
-        <div class="result-card winner">
+            {% if result.probabilities %}
+                <div class="card probability">
+                    <h2>Model Probability</h2>
 
-          <span class="result-label">
-            Predicted Winner
-          </span>
+                    <p>
+                        <strong>{{ result.bat_first }}</strong>:
+                        {{ result.probabilities.get(result.bat_first, 0) }}%
+                    </p>
 
-          <strong>
-            {{ result.winner }}
-          </strong>
+                    <p>
+                        <strong>{{ result.bat_second }}</strong>:
+                        {{ result.probabilities.get(result.bat_second, 0) }}%
+                    </p>
+                </div>
+            {% endif %}
 
-        </div>
+        </section>
 
+        <!-- MODEL INFORMATION -->
+        <section class="card model-information">
 
-        <!-- Predicted Score -->
+            <h2>Model Information</h2>
 
-        <div class="result-card score">
+            <div class="model-row">
+                <span>Selected ML Model</span>
+                <strong id="selectedModel">
+                    {{ best_model or "Random Forest Classifier" }}
+                </strong>
+            </div>
 
-          <span class="result-label">
-            Predicted Score
-          </span>
+            <div class="model-row">
+                <span>Model Accuracy</span>
+                <strong id="modelAccuracy">
+                    {% if best_model_accuracy is not none %}
+                        {{ "%.2f"|format(best_model_accuracy) }}%
+                    {% else %}
+                        Not available
+                    {% endif %}
+                </strong>
+            </div>
 
-          <strong>
-            {{ result.score }}
-          </strong>
-
-        </div>
-
-
-        <!-- =================================================
-             MODEL PROBABILITY
-        ================================================== -->
-
-        {% if result.probabilities %}
-
-          <div class="card probability">
-
-            <h2>
-              Model Probability
-            </h2>
-
-
-            <!-- First Batting Team Probability -->
-
-            <p>
-              <strong>
-                {{ result.bat_first }}
-              </strong>
-
-              :
-              {{ result.probabilities.get(result.bat_first, 0) }}%
+            <p class="model-note">
+                The displayed accuracy is calculated using
+                the held-out test data during model evaluation.
             </p>
 
-
-            <!-- Second Batting Team Probability -->
-
-            <p>
-              <strong>
-                {{ result.bat_second }}
-              </strong>
-
-              :
-              {{ result.probabilities.get(result.bat_second, 0) }}%
-            </p>
-
-          </div>
-
-        {% endif %}
-
-
-      </section>
+        </section>
 
     {% endif %}
 
-
-    <!-- =====================================================
-         FOOTER
-    ====================================================== -->
-
+    <!-- FOOTER -->
     <footer>
-
-      <p>
-        Training source:
-        {{ training_source }}
-      </p>
-
-      <p>
-        Based on the Random Forest methodology from the
-        original MatchResult project.
-      </p>
-
+        <p>
+            Training source: {{ training_source }}
+        </p>
     </footer>
 
+</main>
 
-  </main>
+<!-- TEAM DROPDOWN LOGIC -->
+<script>
+
+    const battingSelect =
+        document.getElementById("bat_first");
+
+    const bowlingSelect =
+        document.getElementById("bat_second");
+
+    // Prevent selecting the same team twice
+    function updateBowlingTeams() {
+
+        const selectedBattingTeam =
+            battingSelect.value;
+
+        const previousBowlingTeam =
+            bowlingSelect.value;
+
+        Array.from(bowlingSelect.options).forEach(
+            function(option) {
+
+                const isSameTeam =
+                    option.value === selectedBattingTeam;
+
+                option.hidden = isSameTeam;
+                option.disabled = isSameTeam;
+            }
+        );
+
+        // Select another team if necessary
+        if (
+            previousBowlingTeam === selectedBattingTeam ||
+            bowlingSelect.selectedOptions.length === 0 ||
+            bowlingSelect.selectedOptions[0].disabled
+        ) {
+
+            const firstAvailable =
+                Array.from(bowlingSelect.options).find(
+                    function(option) {
+                        return !option.disabled;
+                    }
+                );
+
+            if (firstAvailable) {
+                bowlingSelect.value = firstAvailable.value;
+            }
+        }
+
+        bowlingSelect.disabled =
+            !Array.from(bowlingSelect.options).some(
+                function(option) {
+                    return !option.disabled;
+                }
+            );
+    }
+
+    // Update bowling teams when batting team changes
+    battingSelect.addEventListener(
+        "change",
+        updateBowlingTeams
+    );
+
+    // Validate form before submission
+    document.getElementById("predictionForm")
+        .addEventListener("submit", function(event) {
+
+            if (
+                battingSelect.value === bowlingSelect.value
+            ) {
+                event.preventDefault();
+
+                alert(
+                    "Please select two different teams."
+                );
+            }
+        });
+
+    // Initialize dropdowns
+    updateBowlingTeams();
+
+</script>
 
 </body>
 </html>

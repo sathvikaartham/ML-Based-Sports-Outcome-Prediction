@@ -1,4 +1,11 @@
-* { box-sizing: border-box; }
+
+/* =========================================
+   GLOBAL STYLES
+========================================= */
+
+* {
+  box-sizing: border-box;
+}
 
 body {
   margin: 0;
@@ -12,6 +19,11 @@ body {
   margin: 0 auto;
   padding: 42px 0 55px;
 }
+
+
+/* =========================================
+   HERO SECTION
+========================================= */
 
 .hero {
   text-align: center;
@@ -40,7 +52,13 @@ h1 {
   font-size: 17px;
 }
 
-.card, .result-card {
+
+/* =========================================
+   CARDS
+========================================= */
+
+.card,
+.result-card {
   background: white;
   border: 1px solid #e1e7ef;
   border-radius: 18px;
@@ -61,13 +79,23 @@ form h2:not(:first-child) {
   margin-top: 28px;
 }
 
+
+/* =========================================
+   FORM AND INPUT FIELDS
+========================================= */
+
 .grid {
   display: grid;
   gap: 16px;
 }
 
-.two { grid-template-columns: repeat(2, 1fr); }
-.four { grid-template-columns: repeat(4, 1fr); }
+.two {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.four {
+  grid-template-columns: repeat(4, 1fr);
+}
 
 label {
   display: flex;
@@ -77,14 +105,32 @@ label {
   font-size: 14px;
 }
 
-input, select {
+input,
+select {
   width: 100%;
   border: 1px solid #ccd5e2;
   border-radius: 10px;
   padding: 12px;
   font-size: 15px;
   background: white;
+  color: #18212f;
 }
+
+input:focus,
+select:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
+}
+
+select {
+  cursor: pointer;
+}
+
+
+/* =========================================
+   PREDICT BUTTON
+========================================= */
 
 button {
   width: 100%;
@@ -97,7 +143,22 @@ button {
   cursor: pointer;
   background: #18212f;
   color: white;
+  transition: background .2s ease,
+              transform .2s ease;
 }
+
+button:hover {
+  background: #26364d;
+}
+
+button:active {
+  transform: scale(.99);
+}
+
+
+/* =========================================
+   PREDICTION RESULTS
+========================================= */
 
 .results {
   display: grid;
@@ -123,7 +184,13 @@ button {
 .result-card strong {
   display: block;
   font-size: 30px;
+  color: #18212f;
 }
+
+
+/* =========================================
+   MODEL PROBABILITY
+========================================= */
 
 .probability {
   grid-column: 1 / -1;
@@ -131,11 +198,91 @@ button {
 
 .probability p {
   margin: 8px 0;
+  font-size: 16px;
+  color: #18212f;
 }
+
+.probability p strong {
+  font-weight: 700;
+}
+
+
+/* =========================================
+   SELECTED MODEL AND ACCURACY
+========================================= */
+
+.model-info-card {
+  grid-column: 1 / -1;
+  background: #ffffff;
+  border: 1px solid #e1e7ef;
+  border-radius: 18px;
+  padding: 26px;
+  margin-bottom: 20px;
+  box-shadow: 0 8px 30px rgba(25, 42, 70, .07);
+}
+
+.model-info-card h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #18212f;
+  margin: 0 0 18px;
+}
+
+.model-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid #edf0f5;
+}
+
+.model-info-row:last-of-type {
+  border-bottom: none;
+}
+
+.model-info-row span {
+  color: #657286;
+  font-size: 15px;
+}
+
+.model-info-row strong {
+  color: #18212f;
+  font-size: 16px;
+  font-weight: 750;
+  text-align: right;
+}
+
+.model-note {
+  color: #718096;
+  font-size: 13px;
+  line-height: 1.6;
+  margin-top: 16px;
+  margin-bottom: 0;
+}
+
+
+/* =========================================
+   ERROR MESSAGE
+========================================= */
 
 .error {
   border-left: 5px solid #b42318;
 }
+
+.error strong {
+  color: #b42318;
+}
+
+.error p {
+  margin-bottom: 0;
+  color: #5e2930;
+}
+
+
+/* =========================================
+   FOOTER
+========================================= */
 
 footer {
   text-align: center;
@@ -144,10 +291,70 @@ footer {
   margin-top: 25px;
 }
 
-@media (max-width: 800px) {
-  .four { grid-template-columns: repeat(2, 1fr); }
+footer p {
+  margin: 8px 0;
 }
 
+
+/* =========================================
+   TABLET RESPONSIVENESS
+========================================= */
+
+@media (max-width: 800px) {
+
+  .four {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .container {
+    width: 94%;
+  }
+
+}
+
+
+/* =========================================
+   MOBILE RESPONSIVENESS
+========================================= */
+
 @media (max-width: 560px) {
-  .two, .four, .results { grid-template-columns: 1fr; }
+
+  .two,
+  .four,
+  .results {
+    grid-template-columns: 1fr;
+  }
+
+  .container {
+    width: 92%;
+    padding: 25px 0 35px;
+  }
+
+  .card,
+  .model-info-card {
+    padding: 20px;
+  }
+
+  .result-card {
+    padding: 24px;
+  }
+
+  .result-card strong {
+    font-size: 26px;
+  }
+
+  .model-info-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .model-info-row strong {
+    text-align: left;
+  }
+
+  .hero p {
+    font-size: 15px;
+  }
+
 }
