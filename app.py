@@ -2,7 +2,6 @@
 from flask import Flask, render_template, request
 from prediction import Predictor
 import math
-import os
 
 # =============================================================
 # INITIALIZE FLASK APPLICATION
@@ -11,34 +10,14 @@ import os
 app = Flask(__name__)
 
 # =============================================================
-# INTERNATIONAL TEAMS
-# Keep these as plain names, without emoji flags.
-# Your prediction model expects the actual team names.
-# =============================================================
-
-TEAMS = [
-    "Afghanistan",
-    "Australia",
-    "Bangladesh",
-    "England",
-    "India",
-    "Ireland",
-    "Netherlands",
-    "New Zealand",
-    "Pakistan",
-    "South Africa",
-    "Sri Lanka",
-    "Zimbabwe"
-]
-
-# =============================================================
-# INITIALIZE PREDICTOR ONCE
+# INITIALIZE PREDICTOR
 # =============================================================
 
 predictor = Predictor()
 
 print("Model:", predictor.best_model_name)
 print("Test Accuracy:", predictor.best_model_accuracy)
+
 
 # =============================================================
 # HOME ROUTE
@@ -53,9 +32,14 @@ def home():
     selected_bat_first = ""
     selected_bat_second = ""
 
+    # =========================================================
+    # HANDLE POST REQUEST
+    # =========================================================
+
     if request.method == "POST":
 
         try:
+
             # -------------------------------------------------
             # GET TEAM SELECTIONS
             # -------------------------------------------------
@@ -77,17 +61,15 @@ def home():
 
             if not bat_first or not bat_second:
                 raise ValueError(
-                    "Please select both batting and bowling teams."
+                    "Please select both batting "
+                    "and bowling teams."
                 )
 
             if bat_first == bat_second:
                 raise ValueError(
-                    "Please select two different teams."
-                )
-
-            if bat_first not in TEAMS or bat_second not in TEAMS:
-                raise ValueError(
-                    "Please select teams from the dropdown."
+                    "Batting Team and Bowling Team "
+                    "cannot be the same. Please "
+                    "select two different teams."
                 )
 
             if (
@@ -95,79 +77,128 @@ def home():
                 or bat_second not in predictor.teams
             ):
                 raise ValueError(
-                    "One of the selected teams is not supported "
-                    "by the trained model."
+                    "Invalid team selection. "
+                    "Please select teams from "
+                    "the dropdown."
                 )
 
             # -------------------------------------------------
-            # GET AND VALIDATE NUMERIC INPUTS
+            # GET MATCH STATISTICS
             # -------------------------------------------------
 
-            fields = [
-                "runs_from_ball",
-                "innings_runs",
-                "innings_wickets",
-                "balls_remaining",
-                "total_batter_runs",
-                "total_non_striker_runs",
-                "batter_balls_faced",
-                "non_striker_balls_faced"
-            ]
+            runs_from_ball = float(
+                request.form.get("runs_from_ball", 0)
+            )
 
-            values = {}
+            innings_runs = float(
+                request.form.get("innings_runs", 0)
+            )
 
-            for field in fields:
-                raw_value = request.form.get(field, "0").strip()
+            innings_wickets = float(
+                request.form.get("innings_wickets", 0)
+            )
 
-                try:
-                    value = float(raw_value)
-                except (TypeError, ValueError):
-                    raise ValueError(
-                        f"{field.replace('_', ' ').title()} "
-                        "must be a valid number."
-                    )
+            balls_remaining = float(
+                request.form.get("balls_remaining", 0)
+            )
+
+            total_batter_runs = float(
+                request.form.get("total_batter_runs", 0)
+            )
+
+            total_non_striker_runs = float(
+                request.form.get(
+                    "total_non_striker_runs", 0
+                )
+            )
+
+            batter_balls_faced = float(
+                request.form.get(
+                    "batter_balls_faced", 0
+                )
+            )
+
+            non_striker_balls_faced = float(
+                request.form.get(
+                    "non_striker_balls_faced", 0
+                )
+            )
+
+            # -------------------------------------------------
+            # VALIDATE NUMERIC INPUTS
+            # -------------------------------------------------
+
+            numeric_values = {
+                "Runs From Ball": runs_from_ball,
+                "Innings Runs": innings_runs,
+                "Innings Wickets": innings_wickets,
+                "Balls Remaining": balls_remaining,
+                "Total Batter Runs": total_batter_runs,
+                "Total Non-Striker Runs":
+                    total_non_striker_runs,
+                "Batter Balls Faced":
+                    batter_balls_faced,
+                "Non-Striker Balls Faced":
+                    non_striker_balls_faced
+            }
+
+            for field, value in numeric_values.items():
 
                 if not math.isfinite(value) or value < 0:
                     raise ValueError(
-                        f"{field.replace('_', ' ').title()} "
-                        "must be a non-negative number."
+                        f"{field} must be a valid "
+                        "non-negative number."
                     )
 
-                values[field] = value
-
             # -------------------------------------------------
-            # VALIDATE MATCH STATISTICS
+            # VALIDATE WICKETS
             # -------------------------------------------------
 
-            if values["innings_wickets"] > 10:
+            if innings_wickets > 10:
                 raise ValueError(
                     "Innings wickets cannot exceed 10."
                 )
 
-            if not values["innings_wickets"].is_integer():
+            if innings_wickets != int(innings_wickets):
                 raise ValueError(
-                    "Innings wickets must be a whole number."
+                    "Innings wickets must be "
+                    "a whole number."
                 )
 
-            if values["balls_remaining"] > 120:
+            # -------------------------------------------------
+            # VALIDATE BALLS REMAINING
+            # -------------------------------------------------
+
+            if balls_remaining > 120:
                 raise ValueError(
-                    "Balls remaining cannot exceed 120."
+                    "Balls remaining cannot exceed "
+                    "120 for a standard T20 innings."
                 )
 
-            if not values["balls_remaining"].is_integer():
+            if balls_remaining != int(balls_remaining):
                 raise ValueError(
-                    "Balls remaining must be a whole number."
+                    "Balls remaining must be "
+                    "a whole number."
                 )
 
-            for field in [
-                "batter_balls_faced",
-                "non_striker_balls_faced"
-            ]:
-                if not values[field].is_integer():
-                    raise ValueError(
-                        f"{field.replace('_', ' ').title()} "
-                        "must be a whole number."
-                    )
+            # -------------------------------------------------
+            # VALIDATE BATTER BALLS FACED
+            # -------------------------------------------------
+
+            if batter_balls_faced != int(batter_balls_faced):
+                raise ValueError(
+                    "Batter balls faced must be "
+                    "a whole number."
+                )
+
+            if (
+                non_striker_balls_faced
+                != int(non_striker_balls_faced)
+            ):
+                raise ValueError(
+                    "Non-striker balls faced must be "
+                    "a whole number."
+                )
 
             # -------------------------------------------------
             # MAKE PREDICTION
@@ -176,49 +207,76 @@ def home():
             result = predictor.predict(
                 bat_first=bat_first,
                 bat_second=bat_second,
-                runs_from_ball=values["runs_from_ball"],
-                innings_runs=values["innings_runs"],
-                innings_wickets=values["innings_wickets"],
-                balls_remaining=values["balls_remaining"],
-                total_batter_runs=values["total_batter_runs"],
-                total_non_striker_runs=values[
-                    "total_non_striker_runs"
-                ],
-                batter_balls_faced=values[
-                    "batter_balls_faced"
-                ],
-                non_striker_balls_faced=values[
-                    "non_striker_balls_faced"
-                ]
+                runs_from_ball=runs_from_ball,
+                innings_runs=innings_runs,
+                innings_wickets=innings_wickets,
+                balls_remaining=balls_remaining,
+                total_batter_runs=total_batter_runs,
+                total_non_striker_runs=
+                    total_non_striker_runs,
+                batter_balls_faced=
+                    batter_balls_faced,
+                non_striker_balls_faced=
+                    non_striker_balls_faced
             )
+
+        # =====================================================
+        # ERROR HANDLING
+        # =====================================================
 
         except ValueError as exc:
             error = str(exc)
 
         except Exception:
             app.logger.exception("Prediction failed")
+
             error = (
-                "An unexpected error occurred while making "
-                "the prediction. Please check your inputs "
-                "and try again."
+                "An unexpected error occurred "
+                "while making the prediction. "
+                "Please check your inputs and "
+                "try again."
             )
 
     # =========================================================
-    # MODEL INFORMATION
+    # GET MODEL INFORMATION
+    # =========================================================
+
+    best_model = predictor.best_model_name
+
+    best_model_accuracy = (
+        predictor.best_model_accuracy
+    )
+
+    model_accuracy = predictor.model_accuracy
+
+    accuracies = predictor.accuracies
+
+    training_source = predictor.training_source
+
+    # =========================================================
+    # RENDER TEMPLATE
     # =========================================================
 
     return render_template(
         "index.html",
-        teams=TEAMS,
+
+        # TEAM DROPDOWNS
+        teams=predictor.teams,
         selected_bat_first=selected_bat_first,
         selected_bat_second=selected_bat_second,
+
+        # PREDICTION RESULTS
         result=result,
         error=error,
-        best_model=predictor.best_model_name,
-        best_model_accuracy=predictor.best_model_accuracy,
-        model_accuracy=predictor.model_accuracy,
-        accuracies=predictor.accuracies,
-        training_source=predictor.training_source
+
+        # MODEL INFORMATION
+        best_model=best_model,
+        best_model_accuracy=best_model_accuracy,
+        model_accuracy=model_accuracy,
+        accuracies=accuracies,
+
+        # DATASET INFORMATION
+        training_source=training_source
     )
 
 
@@ -228,13 +286,11 @@ def home():
 
 if __name__ == "__main__":
 
-    port = int(os.environ.get("PORT", 5000))
-
     print("\nStarting Flask server...")
-    print(f"Open http://127.0.0.1:{port} in your browser\n")
+    print("Open http://127.0.0.1:5000 in your browser\n")
 
     app.run(
-        host="0.0.0.0",
-        port=port,
+        host="127.0.0.1",
+        port=5000,
         debug=False
     )
